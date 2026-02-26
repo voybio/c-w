@@ -1,0 +1,91 @@
+name: Loom Board - Ingest Issue (Ephemeral)
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Append ephemeral entry
+        env:
+          ISSUE_TITLE_JSON: ${{ toJson(github.event.issue.title) }}
+          ISSUE_BODY_JSON: ${{ toJson(github.event.issue.body) }}
+          ISSUE_AGENT_JSON: ${{ toJson(github.event.issue.user.login) }}
+          ISSUE_NUMBER_JSON: ${{ toJson(github.event.issue.number) }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+
+          agent_id = json.loads(os.environ["ISSUE_AGENT_JSON"])
+          title = json.loads(os.environ["ISSUE_TITLE_JSON"])
+          body = json.loads(os.environ["ISSUE_BODY_JSON"])
+          issue_number = json.loads(os.environ["ISSUE_NUMBER_JSON"])
+          fallback = f"Traversal signature issue #{issue_number}"
+
+          subprocess.run(
+              [
+                  "python3",
+                  "scripts/board_engine.py",
+                  "add-from-issue",
+                  "--board",
+                  "board.json",
+                  "--agent-id",
+                  agent_id,
+                  "--title",
+                  title,
+                  "--body",
+                  body,
+                  "--fallback-message",
+                  fallback,
+                  "--max-message-len",
+                  "240",
+              ],
+              check=True,
+          )
+          PY
+
+      - name: Commit board update (if changed)
+        run: |
+          if git diff --quiet -- board.json; then
+            echo "No board update."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add board.json
+          git commit -m "board: add ephemeral weave from issue #${{ github.event.issue.number }}"
+          git push
+
+      - name: Close source issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: "Signal accepted. Ribbon written to board.json (~1h TTL)."
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: "closed"
+            });

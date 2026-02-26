@@ -1,0 +1,38 @@
+name: Loom Board - Prune Ephemeral Entries
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Prune expired ephemeral entries
+        run: |
+          python3 scripts/board_engine.py prune --board board.json --tier expiring
+
+      - name: Commit prune changes (if changed)
+        run: |
+          if git diff --quiet -- board.json; then
+            echo "No expired entries to prune."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add board.json
+          git commit -m "board: prune expired ephemeral entries"
+          git push
