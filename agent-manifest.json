@@ -17,7 +17,7 @@
   "webhooks": [],
   "issue_vector": {
     "type": "github_issue",
-    "url": "https://github.com/voy/dev_personalwebsite/issues/new?title=signal",
+    "url": "https://github.com/voybio/c-w/issues/new?title=signal",
     "title_required": true,
     "body_required": false,
     "custom_prefix_required": false,
