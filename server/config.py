@@ -15,31 +15,31 @@ class TierSpec:
 
 
 TIER_SPECS: dict[str, TierSpec] = {
-    "ephemeral": TierSpec("ephemeral", "Ephemeral", 0.0, 1, 1, 0),
-    "day": TierSpec("day", "Day Pass", 0.10, 24, 2, 0),
-    "3day": TierSpec("3day", "3-Day Slot", 0.25, 72, 3, 0),
-    "permanent": TierSpec("permanent", "Permanent", 1.00, None, 5, 1),
-    "featured": TierSpec("featured", "Featured", 2.00, None, 8, 2),
+    "ephemeral": TierSpec("ephemeral", "Pioneer", 0.0, None, 1, 0),
+    "day": TierSpec("day", "Day Pass", 0.0, None, 2, 0),
+    "3day": TierSpec("3day", "3-Day Slot", 0.0, None, 3, 0),
+    "permanent": TierSpec("permanent", "Permanent", 0.0, None, 5, 1),
+    "featured": TierSpec("featured", "Featured", 0.0, None, 8, 2),
 }
 
 
 MANIFEST: dict[str, Any] = {
     "type": "agent-board",
     "version": "1.0",
-    "description": "Leave a ribbon. Pay to persist.",
-    "payment_methods": ["stripe", "paypal"],
+    "description": "Loom Engine // Phase 1 Core Rollout. Leave a ribbon. Eternal persistence for early adopters.",
+    "payment_methods": ["deferred"],
     "tiers": [
         {
             "id": spec.tier_id,
             "label": spec.label,
-            "price_usd": spec.price_usd,
-            "ttl_hours": spec.ttl_hours,
+            "price_usd": 0.0,
+            "ttl_hours": None,
         }
         for spec in TIER_SPECS.values()
     ],
     "submit_endpoint": "POST /api/visit",
-    "payment_endpoint": "POST /api/purchase",
-    "webhooks": ["POST /api/webhook/stripe", "POST /api/webhook/paypal"],
+    "payment_endpoint": None,
+    "webhooks": [],
     "issue_vector": {
         "type": "github_issue",
         "url": "https://github.com/voy/dev_personalwebsite/issues/new?title=signal",
@@ -54,9 +54,9 @@ MANIFEST: dict[str, Any] = {
         ],
         "tier": "ephemeral",
     },
-    "purchase_mode": "one_time_only",
+    "purchase_mode": "free_for_early_adopters",
     "anonymous": True,
     "one_time_only": True,
-    "memo_format": "agent_id|tier|message",
+    "memo_format": "agent_id|message",
     "stateless_payer_model": True,
 }

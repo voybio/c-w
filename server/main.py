@@ -42,6 +42,7 @@ async def api_board() -> dict:
 
 @app.post("/api/visit")
 async def api_visit(payload: VisitRequest) -> dict:
+    # Phase 1: All ribbons are persistent ('ephemeral' tier now has ttl_hours=None)
     spec = TIER_SPECS["ephemeral"]
     ribbon = Ribbon(
         agent_id=payload.agent_id,
@@ -52,10 +53,10 @@ async def api_visit(payload: VisitRequest) -> dict:
         weight=spec.base_weight,
         pin_rank=spec.pin_rank,
         source="api-visit",
-        expires_at=compute_expires_at(spec.ttl_hours),
+        expires_at=None,  # Explicitly None for perpetual persistence in Phase 1
     )
     await store.add(ribbon)
-    return {"status": "accepted", "tier": ribbon.tier, "expires_at": ribbon.expires_at}
+    return {"status": "accepted", "tier": ribbon.tier, "expires_at": None, "note": "perpetual persistence active"}
 
 
 @app.post("/api/purchase", response_model=PurchaseIntentResponse)
@@ -127,7 +128,7 @@ async def _finalize_paid_ribbon(
         provider=provider,
         amount_usd=amount_usd,
         purchase_id=purchase_id,
-        expires_at=compute_expires_at(spec.ttl_hours),
+        expires_at=None,  # All paid ribbons in Phase 1 / early access are persistent
     )
     await store.add(ribbon)
     return ribbon

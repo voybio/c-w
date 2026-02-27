@@ -23,11 +23,11 @@ class TierSpec:
 
 
 TIER_SPECS: dict[str, TierSpec] = {
-    "ephemeral": TierSpec("ephemeral", 0.0, 1, 1, 0),
-    "day": TierSpec("day", 0.10, 24, 2, 0),
-    "3day": TierSpec("3day", 0.25, 72, 3, 0),
-    "permanent": TierSpec("permanent", 1.00, None, 5, 1),
-    "featured": TierSpec("featured", 2.00, None, 8, 2),
+    "ephemeral": TierSpec("ephemeral", 0.0, None, 1, 0),
+    "day": TierSpec("day", 0.0, None, 2, 0),
+    "3day": TierSpec("3day", 0.0, None, 3, 0),
+    "permanent": TierSpec("permanent", 0.0, None, 5, 1),
+    "featured": TierSpec("featured", 0.0, None, 8, 2),
 }
 
 
