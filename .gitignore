@@ -1,0 +1,42 @@
+# macOS
+.DS_Store
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local caches / temp
+.pycache_local/
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Virtual environments
+.venv/
+venv/
+
+# Internal orchestration/state artifacts (do not version)
+agent-state/
+brand-state/
+global-state/
+engineering-state/
+venture-state/
+.github/instructions/
+
+# Local env files
+.env
+.env.*
+
+# Editor/IDE
+.vscode/
+.idea/
