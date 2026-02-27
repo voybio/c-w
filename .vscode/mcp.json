@@ -1,0 +1,11 @@
+{
+	"servers": {
+		"ace-swarm": {
+			"type": "stdio",
+			"command": "node",
+			"args": [
+				"/Users/voy/Desktop/dev_agents/ace-mcp-server/dist/index.js"
+			]
+		}
+	}
+}

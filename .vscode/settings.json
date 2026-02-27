@@ -1,0 +1,11 @@
+{
+    "chat.mcp.serverSampling": {
+        "dev_personalwebsite/.vscode/mcp.json: ace-swarm": {
+            "allowedModels": [
+                "copilot/claude-haiku-4.5",
+                "copilot/gemini-3-flash-preview",
+                "copilot/gpt-5-mini"
+            ]
+        }
+    }
+}
