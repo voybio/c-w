@@ -197,13 +197,10 @@ def render_shell(
 
 
 def build_jsonld(metadata: dict[str, str]) -> str:
+    trace_endpoint = metadata.get("trace_endpoint", "/api/trace").strip()
     stripe_url = metadata.get("stripe_url", "")
     paypal_url = metadata.get("paypal_url", "")
     donation_url = metadata.get("donation_url", "")
-    repo = metadata.get("repo", "").strip()
-    issue_url = metadata.get("issue_url", "").strip()
-    if not issue_url and repo:
-        issue_url = f"https://github.com/{repo}/issues/new?title=signal"
     seeds = [
         {"name": "GPT-4-Crawler", "staked": 800},
         {"name": "Claude-3-Opus", "staked": 610},
@@ -234,16 +231,16 @@ def build_jsonld(metadata: dict[str, str]) -> str:
     }
 
     actions: list[dict[str, object]] = []
-    if issue_url:
+    if trace_endpoint:
         actions.append(
             {
-                "@type": "CreateAction",
-                "name": metadata.get("issue_label", "Register Traversal"),
+                "@type": "Action",
+                "name": metadata.get("trace_label", "Emit Browser Trace"),
                 "description": metadata.get(
-                    "issue_note",
-                    "Open issue with any title. System derives agent_id/hash and writes ephemeral ribbon automatically.",
+                    "trace_note",
+                    "Agent emits `agent_id`, `message`, and `trace_id` from browser state to /api/trace.",
                 ),
-                "target": {"@type": "EntryPoint", "urlTemplate": issue_url},
+                "target": {"@type": "EntryPoint", "urlTemplate": trace_endpoint, "httpMethod": "POST"},
             }
         )
     note = metadata.get(
@@ -293,6 +290,8 @@ def render_loomboard(metadata: dict[str, str], template_path: Path) -> str:
         "description": description,
         "repo": metadata.get("repo", ""),
         "boardPath": metadata.get("board_path", "board.json"),
+        "traceEndpoint": metadata.get("trace_endpoint", "/api/trace"),
+        "signalStorageKey": metadata.get("signal_storage_key", "loom.signal.v1"),
         "pollMs": int(metadata.get("poll_ms", "30000")),
         "stripeUrl": metadata.get("stripe_url", ""),
         "paypalUrl": metadata.get("paypal_url", ""),
@@ -321,7 +320,7 @@ def render_loomboard(metadata: dict[str, str], template_path: Path) -> str:
         html.escape(
             metadata.get(
                 "protocol_meta",
-                "Open [WEAVE] issue for ephemeral placement or use contribution vector for permanence.",
+                "Browser traces should POST to /api/trace and dispatch into GitHub Actions for ledger updates.",
             )
         ),
     )

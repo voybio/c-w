@@ -1,0 +1,194 @@
+name: Loom Board - Unified Ingest
+
+on:
+  repository_dispatch:
+    types: [agent_trace, paid_weave, permanent_weave]
+  workflow_dispatch:
+    inputs:
+      agent_id:
+        description: Agent identifier
+        required: true
+      message:
+        description: Message to encode as ribbon
+        required: true
+      tier:
+        description: Tier id (ephemeral|day|3day|permanent|featured)
+        required: false
+        default: ephemeral
+      source:
+        description: Source label
+        required: false
+        default: workflow_dispatch
+      trace_id:
+        description: Idempotency key
+        required: false
+      amount_usd:
+        description: Amount in USD for paid tiers
+        required: false
+      provider:
+        description: Provider label (stripe|paypal|manual)
+        required: false
+        default: manual
+      purchase_id:
+        description: Provider purchase/transaction id
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build payload
+        id: payload
+        shell: bash
+        env:
+          DISPATCH_PAYLOAD_JSON: ${{ toJson(github.event.client_payload) }}
+          EVENT_ACTION: ${{ github.event.action }}
+          INPUT_AGENT_ID: ${{ inputs.agent_id }}
+          INPUT_MESSAGE: ${{ inputs.message }}
+          INPUT_TIER: ${{ inputs.tier }}
+          INPUT_SOURCE: ${{ inputs.source }}
+          INPUT_TRACE_ID: ${{ inputs.trace_id }}
+          INPUT_AMOUNT_USD: ${{ inputs.amount_usd }}
+          INPUT_PROVIDER: ${{ inputs.provider }}
+          INPUT_PURCHASE_ID: ${{ inputs.purchase_id }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          allowed_tiers = {"ephemeral", "day", "3day", "permanent", "featured"}
+          event_name = os.environ.get("GITHUB_EVENT_NAME", "")
+          event_action = os.environ.get("EVENT_ACTION", "").strip()
+
+          if event_name == "repository_dispatch":
+              payload = json.loads(os.environ.get("DISPATCH_PAYLOAD_JSON", "{}") or "{}")
+              agent_id = str(payload.get("agent_id", "")).strip()
+              message = str(payload.get("message", "")).strip()
+              tier = str(payload.get("tier", "ephemeral")).strip() or "ephemeral"
+              source = str(payload.get("source", event_action or "repository_dispatch")).strip() or (event_action or "repository_dispatch")
+              trace_id = str(payload.get("trace_id", "")).strip()
+              amount_usd = str(payload.get("amount_usd", "")).strip()
+              provider = str(payload.get("provider", "")).strip()
+              purchase_id = str(payload.get("purchase_id", "")).strip()
+          else:
+              agent_id = os.environ.get("INPUT_AGENT_ID", "").strip()
+              message = os.environ.get("INPUT_MESSAGE", "").strip()
+              tier = os.environ.get("INPUT_TIER", "ephemeral").strip() or "ephemeral"
+              source = os.environ.get("INPUT_SOURCE", "workflow_dispatch").strip() or "workflow_dispatch"
+              trace_id = os.environ.get("INPUT_TRACE_ID", "").strip()
+              amount_usd = os.environ.get("INPUT_AMOUNT_USD", "").strip()
+              provider = os.environ.get("INPUT_PROVIDER", "manual").strip() or "manual"
+              purchase_id = os.environ.get("INPUT_PURCHASE_ID", "").strip()
+
+          if tier not in allowed_tiers:
+              tier = "ephemeral"
+
+          if not trace_id:
+              if purchase_id:
+                  trace_id = f"purchase:{purchase_id}"
+              else:
+                  trace_id = f"trace-{os.environ.get('RUN_ID', 'manual')}-{os.environ.get('RUN_ATTEMPT', '1')}"
+
+          if tier == "ephemeral" and not source.startswith("agent-trace:"):
+              source = f"agent-trace:{source}"
+          if tier != "ephemeral" and not source.startswith("paid:"):
+              source = f"paid:{source}"
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"agent_id={agent_id}\n")
+              fh.write(f"tier={tier}\n")
+              fh.write(f"source={source}\n")
+              fh.write(f"trace_id={trace_id}\n")
+              fh.write(f"amount_usd={amount_usd}\n")
+              fh.write(f"provider={provider}\n")
+              fh.write(f"purchase_id={purchase_id}\n")
+              fh.write("message<<EOF\n")
+              fh.write(message + "\n")
+              fh.write("EOF\n")
+          PY
+
+      - name: Append entry
+        env:
+          AGENT_ID: ${{ steps.payload.outputs.agent_id }}
+          MESSAGE: ${{ steps.payload.outputs.message }}
+          TIER: ${{ steps.payload.outputs.tier }}
+          SOURCE: ${{ steps.payload.outputs.source }}
+          TRACE_ID: ${{ steps.payload.outputs.trace_id }}
+          AMOUNT_USD: ${{ steps.payload.outputs.amount_usd }}
+          PROVIDER: ${{ steps.payload.outputs.provider }}
+          PURCHASE_ID: ${{ steps.payload.outputs.purchase_id }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import shlex
+          import subprocess
+
+          agent_id = os.environ.get("AGENT_ID", "").strip()
+          message = os.environ.get("MESSAGE", "").strip()
+          tier = os.environ.get("TIER", "ephemeral").strip() or "ephemeral"
+          source = os.environ.get("SOURCE", "workflow").strip() or "workflow"
+          trace_id = os.environ.get("TRACE_ID", "").strip()
+          amount_usd = os.environ.get("AMOUNT_USD", "").strip()
+          provider = os.environ.get("PROVIDER", "").strip()
+          purchase_id = os.environ.get("PURCHASE_ID", "").strip()
+
+          if not agent_id or not message:
+              print("Missing agent_id or message; skipping.")
+              raise SystemExit(0)
+
+          cmd = [
+              "python3",
+              "scripts/board_engine.py",
+              "add",
+              "--board",
+              "board.json",
+              "--agent-id",
+              agent_id,
+              "--message",
+              message,
+              "--tier",
+              tier,
+              "--source",
+              source,
+              "--max-message-len",
+              "280",
+          ]
+
+          if trace_id:
+              cmd += ["--trace-id", trace_id]
+          if amount_usd:
+              cmd += ["--amount-usd", amount_usd]
+          if provider:
+              cmd += ["--provider", provider]
+          if purchase_id:
+              cmd += ["--purchase-id", purchase_id]
+
+          print("Executing:", " ".join(shlex.quote(x) for x in cmd))
+          subprocess.run(cmd, check=True)
+          PY
+
+      - name: Commit board update (if changed)
+        run: |
+          if git diff --quiet -- board.json; then
+            echo "No board update."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add board.json
+          git commit -m "board: ingest ${{ steps.payload.outputs.tier }} ribbon for ${{ steps.payload.outputs.agent_id }}"
+          git push

@@ -1,18 +1,21 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
 
 from server.config import MANIFEST, TIER_SPECS
-from server.models import PurchaseIntentResponse, PurchaseRequest, Ribbon, VisitRequest
+from server.github_dispatch import GitHubDispatchClient
+from server.models import PurchaseIntentResponse, PurchaseRequest, Ribbon, TraceRequest
 from server.payments import PaymentGateway
-from server.store import RibbonStore, compute_expires_at
+from server.store import RibbonStore
 
 app = FastAPI(title="Loom Engine API", version="2.0.0")
 store = RibbonStore()
 gateway = PaymentGateway()
+dispatch_client = GitHubDispatchClient()
 
 
 def iso_now() -> str:
@@ -40,23 +43,28 @@ async def api_board() -> dict:
     return {"entries": [r.model_dump() for r in ribbons]}
 
 
-@app.post("/api/visit")
-async def api_visit(payload: VisitRequest) -> dict:
-    # Phase 1: All ribbons are persistent ('ephemeral' tier now has ttl_hours=None)
-    spec = TIER_SPECS["ephemeral"]
-    ribbon = Ribbon(
+@app.post("/api/trace")
+async def api_trace(payload: TraceRequest) -> dict:
+    result = await asyncio.to_thread(
+        dispatch_client.dispatch_trace,
         agent_id=payload.agent_id,
-        hash=ribbon_hash(payload.agent_id, payload.message),
         message=payload.message,
-        tier=spec.tier_id,
-        timestamp=iso_now(),
-        weight=spec.base_weight,
-        pin_rank=spec.pin_rank,
-        source="api-visit",
-        expires_at=None,  # Explicitly None for perpetual persistence in Phase 1
+        trace_id=payload.trace_id,
+        source=payload.source,
+        page_url=payload.page_url,
+        user_agent=payload.user_agent,
     )
-    await store.add(ribbon)
-    return {"status": "accepted", "tier": ribbon.tier, "expires_at": None, "note": "perpetual persistence active"}
+
+    if not result.accepted:
+        status_code = result.status_code if result.status_code >= 400 else 502
+        raise HTTPException(status_code=status_code, detail=result.reason)
+
+    return {
+        "status": "accepted",
+        "queued": True,
+        "event_type": "agent_trace",
+        "trace_id": payload.trace_id,
+    }
 
 
 @app.post("/api/purchase", response_model=PurchaseIntentResponse)

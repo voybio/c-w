@@ -77,21 +77,6 @@ def save_board(path: Path, entries: list[dict[str, Any]]) -> None:
     path.write_text(json.dumps(normalized, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def extract_weave_message(title: str, body: str, fallback: str = "") -> str | None:
-    candidates = [title, body]
-    pattern = re.compile(r"\[WEAVE\]\s*:\s*(.+)", re.IGNORECASE)
-    for text in candidates:
-        match = pattern.search(text or "")
-        if match:
-            return match.group(1).strip()
-
-    merged = " ".join([(title or "").strip(), (body or "").strip()]).strip()
-    if merged:
-        return merged
-    fb = normalize_message(fallback or "")
-    return fb or None
-
-
 def infer_weight(tier: str, amount_usd: float | None, explicit_weight: int | None) -> int:
     if explicit_weight is not None:
         return max(1, int(explicit_weight))
@@ -122,6 +107,7 @@ def add_entry(
     source: str,
     amount_usd: float | None,
     weight: int | None,
+    trace_id: str | None,
     max_message_len: int,
     provider: str | None,
     purchase_id: str | None,
@@ -133,6 +119,10 @@ def add_entry(
     normalized_message = normalize_message(message, max_len=max_message_len)
     if not normalized_message:
         return False
+    if trace_id:
+        for current in entries:
+            if str(current.get("trace_id", "")) == trace_id:
+                return False
 
     now = utc_now()
     entry: dict[str, Any] = {
@@ -145,6 +135,7 @@ def add_entry(
         "pin_rank": TIER_SPECS[tier].pin_rank,
         "source": source,
         "expires_at": compute_expires_at(tier, now),
+        "trace_id": trace_id,
     }
 
     if amount_usd is not None:
@@ -217,31 +208,10 @@ def cmd_add(args: argparse.Namespace) -> int:
         source=args.source,
         amount_usd=args.amount_usd,
         weight=args.weight,
+        trace_id=args.trace_id,
         max_message_len=args.max_message_len,
         provider=args.provider,
         purchase_id=args.purchase_id,
-    )
-    print("added" if changed else "ignored")
-    return 0
-
-
-def cmd_add_from_issue(args: argparse.Namespace) -> int:
-    message = extract_weave_message(args.title or "", args.body or "", fallback=args.fallback_message or "")
-    if not message:
-        print("ignored")
-        return 0
-
-    changed = add_entry(
-        board_path=args.board,
-        agent_id=args.agent_id,
-        message=message,
-        tier="ephemeral",
-        source="issue",
-        amount_usd=None,
-        weight=1,
-        max_message_len=args.max_message_len,
-        provider=None,
-        purchase_id=None,
     )
     print("added" if changed else "ignored")
     return 0
@@ -265,19 +235,11 @@ def build_parser() -> argparse.ArgumentParser:
     add.add_argument("--source", default="manual")
     add.add_argument("--amount-usd", type=float)
     add.add_argument("--weight", type=int)
+    add.add_argument("--trace-id")
     add.add_argument("--provider")
     add.add_argument("--purchase-id")
     add.add_argument("--max-message-len", type=int, default=280)
     add.set_defaults(func=cmd_add)
-
-    add_issue = sub.add_parser("add-from-issue", help="Add ephemeral entry from issue payload")
-    add_issue.add_argument("--board", type=Path, default=Path("board.json"))
-    add_issue.add_argument("--agent-id", required=True)
-    add_issue.add_argument("--title", default="")
-    add_issue.add_argument("--body", default="")
-    add_issue.add_argument("--fallback-message", default="")
-    add_issue.add_argument("--max-message-len", type=int, default=280)
-    add_issue.set_defaults(func=cmd_add_from_issue)
 
     prune = sub.add_parser("prune", help="Prune expired entries")
     prune.add_argument("--board", type=Path, default=Path("board.json"))

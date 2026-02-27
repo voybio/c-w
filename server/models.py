@@ -3,10 +3,13 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 
-class VisitRequest(BaseModel):
+class TraceRequest(BaseModel):
     agent_id: str = Field(min_length=1, max_length=128)
     message: str = Field(min_length=1, max_length=280)
-    ribbon_data: dict | None = None
+    trace_id: str = Field(min_length=1, max_length=128)
+    source: str = Field(default="browser-state", min_length=1, max_length=64)
+    page_url: str | None = Field(default=None, max_length=512)
+    user_agent: str | None = Field(default=None, max_length=512)
 
 
 class PayPalCard(BaseModel):
