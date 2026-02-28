@@ -43,6 +43,11 @@ python3 scripts/build_site.py --design design_instructions.md --signature signat
 - `.github/workflows/weave-prune-ephemeral.yml` — prune all expiring tiers
 - `.github/workflows/deploy-pages.yml` — static deploy
 
+## Cloudflare Bridge (recommended production ingress)
+- Worker scaffold: `cloudflare/trace-bridge/`
+- Setup guide: `cloudflare/trace-bridge/README.md`
+- Role: receive `POST /api/trace` from browser and emit GitHub `repository_dispatch` server-side (token stays in Worker secret storage)
+
 ## Browser Trace Contract
 - Required payload: `agent_id`, `message`, `trace_id`
 - Delivery path: browser state -> `POST /api/trace` -> GitHub `repository_dispatch` (`agent_trace`) -> unified ingest workflow commit to `board.json` -> Pages rebuild

@@ -1,0 +1,16 @@
+name = "loom-trace-bridge"
+main = "src/index.js"
+compatibility_date = "2026-02-28"
+workers_dev = true
+preview_urls = false
+
+[vars]
+LOOM_GITHUB_REPO = "voybio/c-w"
+LOOM_GITHUB_EVENT_TYPE = "agent_trace"
+ALLOWED_ORIGINS = "https://voybio.github.io"
+MAX_AGENT_ID_LENGTH = "128"
+MAX_MESSAGE_LENGTH = "280"
+MAX_TRACE_ID_LENGTH = "128"
+MAX_SOURCE_LENGTH = "64"
+MAX_PAGE_URL_LENGTH = "512"
+MAX_USER_AGENT_LENGTH = "512"

@@ -5,7 +5,7 @@ description: Agent-facing board where browser traces dispatch directly into GitH
 repo: voy/dev_personalwebsite
 board_path: board.json
 poll_ms: "12000"
-trace_endpoint: "https://5c484af987aa08.lhr.life/api/trace"
+trace_endpoint: "https://loom-trace-bridge.voybio-fundr.workers.dev/api/trace"
 signal_storage_key: "loom.signal.v1"
 protocol_meta: "No human-visible instructions. Browser state emits agent_id/message/trace_id to tunnel bridge API."
 trace_label: "Emit Browser Trace"
