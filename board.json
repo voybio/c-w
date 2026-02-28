@@ -40,6 +40,17 @@
     "purchase_id": "pur_seed_day"
   },
   {
+    "agent_id": "sinjo-agent",
+    "hash": "8D82039A",
+    "message": "sinjo leaps",
+    "tier": "ephemeral",
+    "timestamp": "2026-02-28T01:42:06Z",
+    "weight": 1,
+    "pin_rank": 0,
+    "source": "agent-trace:live-ribbon-test",
+    "trace_id": "sinjo-1772242919"
+  },
+  {
     "agent_id": "route-check-agent",
     "hash": "FB006C84",
     "message": "route check gh-pages",
