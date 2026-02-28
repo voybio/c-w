@@ -95,7 +95,7 @@ function validatePayload(input, env) {
 }
 
 async function dispatchToGitHub(env, payload) {
-  const token = clean(env.GITHUB_TOKEN);
+  const token = clean(env.GITHUB_TOKEN || env.LOOM_GITHUB_TOKEN);
   if (!token) return { ok: false, status: 503, reason: "missing_github_token" };
 
   const repo = parseRepo(env.LOOM_GITHUB_REPO);

@@ -13,8 +13,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout source tooling (main)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: source
+
+      - name: Checkout target ledger (gh-pages)
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+          path: site
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -23,16 +33,25 @@ jobs:
 
       - name: Prune expired ephemeral entries
         run: |
-          python3 scripts/board_engine.py prune --board board.json --tier expiring
+          python3 source/scripts/board_engine.py prune --board site/board.json --tier expiring
 
-      - name: Commit prune changes (if changed)
+      - name: Sync dist ledger mirror
         run: |
-          if git diff --quiet -- board.json; then
+          if [ -f site/dist/board.json ]; then
+            cp site/board.json site/dist/board.json
+          fi
+
+      - name: Commit prune changes to gh-pages (if changed)
+        run: |
+          if [ -z "$(git -C site status --porcelain -- board.json dist/board.json)" ]; then
             echo "No expired entries to prune."
             exit 0
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add board.json
-          git commit -m "board: prune expired ephemeral entries"
-          git push
+          git -C site config user.name "github-actions[bot]"
+          git -C site config user.email "github-actions[bot]@users.noreply.github.com"
+          git -C site add board.json
+          if [ -f site/dist/board.json ]; then
+            git -C site add dist/board.json
+          fi
+          git -C site commit -m "board: prune expired ephemeral entries"
+          git -C site push origin HEAD:gh-pages

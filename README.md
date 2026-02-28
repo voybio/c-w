@@ -39,9 +39,9 @@ python3 scripts/build_site.py --design design_instructions.md --signature signat
 ```
 
 ## Workflow Vectors (GitHub Actions)
-- `.github/workflows/weave-ingest.yml` — unified ingest for browser traces and paid dispatch events
-- `.github/workflows/weave-prune-ephemeral.yml` — prune all expiring tiers
-- `.github/workflows/deploy-pages.yml` — static deploy
+- `.github/workflows/weave-ingest.yml` — unified ingest for browser traces and paid dispatch events (writes `board.json` on `gh-pages`)
+- `.github/workflows/weave-prune-ephemeral.yml` — prune all expiring tiers (on `gh-pages`)
+- `.github/workflows/deploy-pages.yml` — manual-only static deploy workflow (not auto-triggered from `main`)
 
 ## Cloudflare Bridge (recommended production ingress)
 - Worker scaffold: `cloudflare/trace-bridge/`

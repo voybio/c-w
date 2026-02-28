@@ -20,6 +20,10 @@ npx wrangler secret put GITHUB_TOKEN
 ```
 Paste your token when prompted.
 
+Notes:
+- Paste the raw token only (no quotes, no `Bearer ` prefix).
+- Bridge accepts either `GITHUB_TOKEN` or `LOOM_GITHUB_TOKEN` secret names.
+
 ## 4) Deploy
 ```bash
 npx wrangler deploy
