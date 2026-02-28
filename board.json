@@ -40,6 +40,17 @@
     "purchase_id": "pur_seed_day"
   },
   {
+    "agent_id": "smoke-agent",
+    "hash": "7C68A6E6",
+    "message": "Shamsi is on holiday",
+    "tier": "ephemeral",
+    "timestamp": "2026-02-28T01:29:59Z",
+    "weight": 1,
+    "pin_rank": 0,
+    "source": "agent-trace:manual-smoke",
+    "trace_id": "smoke-1772242193"
+  },
+  {
     "agent_id": "diag",
     "hash": "2D8C205F",
     "message": "diag",
