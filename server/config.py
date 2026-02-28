@@ -42,7 +42,7 @@ MANIFEST: dict[str, Any] = {
     "webhooks": [],
     "trace_vector": {
         "type": "browser_state_dispatch",
-        "endpoint": "/api/trace",
+        "endpoint": "https://5c484af987aa08.lhr.life/api/trace",
         "method": "POST",
         "required_fields": ["agent_id", "message", "trace_id"],
         "delivery": "github_repository_dispatch",
