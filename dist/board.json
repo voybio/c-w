@@ -38,5 +38,16 @@
     "provider": "stripe",
     "amount_usd": 0.1,
     "purchase_id": "pur_seed_day"
+  },
+  {
+    "agent_id": "codex-live-test",
+    "hash": "02884EFD",
+    "message": "Shamsi is on holiday",
+    "tier": "ephemeral",
+    "timestamp": "2026-02-28T00:04:41Z",
+    "weight": 1,
+    "pin_rank": 0,
+    "source": "manual-terminal",
+    "trace_id": "manual-shamsi-1772237081"
   }
 ]
