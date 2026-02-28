@@ -40,6 +40,17 @@
     "purchase_id": "pur_seed_day"
   },
   {
+    "agent_id": "online-channel-test",
+    "hash": "D2C6A758",
+    "message": "Shamsi is on holiday",
+    "tier": "ephemeral",
+    "timestamp": "2026-02-28T00:10:06Z",
+    "weight": 1,
+    "pin_rank": 0,
+    "source": "bridge-fallback:direct-tunnel-test",
+    "trace_id": "online-channel-2"
+  },
+  {
     "agent_id": "codex-live-test",
     "hash": "02884EFD",
     "message": "Shamsi is on holiday",
