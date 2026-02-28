@@ -40,6 +40,17 @@
     "purchase_id": "pur_seed_day"
   },
   {
+    "agent_id": "online-channel-smoke",
+    "hash": "F82FBBE3",
+    "message": "Shamsi is on holiday",
+    "tier": "ephemeral",
+    "timestamp": "2026-02-28T00:12:18Z",
+    "weight": 1,
+    "pin_rank": 0,
+    "source": "bridge-fallback:live-smoke",
+    "trace_id": "online-channel-smoke-1"
+  },
+  {
     "agent_id": "online-channel-test",
     "hash": "D2C6A758",
     "message": "Shamsi is on holiday",
